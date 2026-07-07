@@ -1,0 +1,55 @@
+{
+  "name": "flipclock-wallpaper",
+  "version": "0.1.0",
+  "description": "Windows 11 live wallpaper with a Three.js 3D split-flap clock in a safe fallback wallpaper window.",
+  "main": "src/main/index.js",
+  "author": "FlipClock Wallpaper Contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win nsis portable",
+    "dist": "npm run build",
+    "lint": "node --check src/main/index.js && node --check src/main/workerw.js && node --check src/renderer/settings.js && node --check src/renderer/clock/app.js"
+  },
+  "dependencies": {
+    "auto-launch": "^5.0.6",
+    "electron-store": "^8.2.0",
+    "three": "^0.166.1"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.flipclock.wallpaper",
+    "productName": "FlipClock Wallpaper",
+    "copyright": "Copyright © 2026 FlipClock Wallpaper Contributors",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "publisherName": "FlipClock Wallpaper Contributors",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FlipClock Wallpaper"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+    }
+  }
+}
