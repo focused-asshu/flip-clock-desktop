@@ -152,6 +152,18 @@ function layoutClock(visibleDigits) {
   });
 }
 
+function updateDateOverlay() {
+  dateOverlay.style.display = settings.clock.showDate ? 'block' : 'none';
+  dateOverlay.style.color = settings.theme.digitColor;
+  dateOverlay.style.textShadow = `0 6px 24px #000, 0 0 18px ${settings.theme.accentColor}`;
+  const clockBottom = new THREE.Vector3(root.position.x, root.position.y - (0.92 * root.scale.y), 0);
+  clockBottom.project(camera);
+  const left = ((clockBottom.x + 1) / 2) * innerWidth;
+  const top = ((-clockBottom.y + 1) / 2) * innerHeight + Math.max(18, 28 * root.scale.y);
+  dateOverlay.style.left = `${Math.max(16, Math.min(innerWidth - 16, left))}px`;
+  dateOverlay.style.top = `${Math.max(16, Math.min(innerHeight - 16, top))}px`;
+}
+
 function applyPosition() {
   const paddingX = camera.aspect * 2.8;
   const paddingY = 1.65;
@@ -164,6 +176,7 @@ function applyPosition() {
   };
   const [x, y] = positions[settings.layout.position] || positions.center;
   root.position.set(x + (settings.layout.offsetX || 0), y + (settings.layout.offsetY || 0), 0);
+  updateDateOverlay();
 }
 
 function build() {
@@ -212,8 +225,8 @@ function tick(force = false) {
     else digit.flip(value[index]);
   });
   last = value;
-  dateOverlay.style.display = settings.clock.showDate ? 'block' : 'none';
   dateOverlay.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  updateDateOverlay();
 }
 
 function animate(now) {

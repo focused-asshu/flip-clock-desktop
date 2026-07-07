@@ -4,5 +4,6 @@ contextBridge.exposeInMainWorld('flipClock', {
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   onSettings: (callback) => ipcRenderer.on('settings:changed', (_event, settings) => callback(settings)),
   restartClock: () => ipcRenderer.invoke('clock:restart'),
+  getAppInfo: () => ipcRenderer.invoke('app:info'),
   platform: process.platform
 });

@@ -64,9 +64,20 @@ async function configureAutoLaunch(enabled) {
   if (!enabled && active) await autoLauncher.disable().catch(() => {});
 }
 
+function createTrayIcon() {
+  const svg = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#111318"/>
+      <rect x="10" y="12" width="44" height="40" rx="6" fill="#1a1d25" stroke="#8fb7ff" stroke-width="3"/>
+      <path d="M10 32h44" stroke="#8fb7ff" stroke-width="3" opacity=".7"/>
+      <text x="32" y="41" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#f4f1e8">12</text>
+    </svg>`);
+  const icon = nativeImage.createFromDataURL(`data:image/svg+xml;charset=utf-8,${svg}`);
+  return icon.isEmpty() ? nativeImage.createEmpty() : icon;
+}
+
 function createTray() {
-  const icon = nativeImage.createFromPath(path.join(__dirname, '../../assets/tray.png'));
-  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon);
+  tray = new Tray(createTrayIcon());
   const rebuild = () => tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Settings', click: createSettingsWindow },
     { label: 'Start with Windows', type: 'checkbox', checked: store.get('startup.autoLaunch'), click: (item) => {
@@ -81,6 +92,7 @@ function createTray() {
 }
 
 ipcMain.handle('settings:get', () => store.store);
+ipcMain.handle('app:info', () => ({ version: app.getVersion(), mode: 'V1 fallback wallpaper mode' }));
 ipcMain.handle('settings:set', (_event, patch) => {
   store.set(patch);
   const settings = store.store;
