@@ -8,9 +8,10 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win nsis portable",
+    "build": "node scripts/build-native.js --electron && electron-builder --win nsis portable",
     "dist": "npm run build",
-    "lint": "node --check src/main/index.js && node --check src/main/workerw.js && node --check src/renderer/settings.js && node --check src/renderer/clock/app.js"
+    "lint": "node --check src/main/index.js && node --check src/main/workerw.js && node --check src/renderer/settings.js && node --check src/renderer/clock/app.js",
+    "install": "node scripts/build-native.js"
   },
   "dependencies": {
     "auto-launch": "^5.0.6",
@@ -24,14 +25,15 @@
   "build": {
     "appId": "com.flipclock.wallpaper",
     "productName": "FlipClock Wallpaper",
-    "copyright": "Copyright © 2026 FlipClock Wallpaper Contributors",
+    "copyright": "Copyright \u00a9 2026 FlipClock Wallpaper Contributors",
     "asar": true,
     "directories": {
       "output": "dist"
     },
     "files": [
       "src/**/*",
-      "package.json"
+      "package.json",
+      "build/Release/*.node"
     ],
     "win": {
       "target": [
@@ -50,6 +52,9 @@
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
-    }
+    },
+    "asarUnpack": [
+      "**/*.node"
+    ]
   }
 }

@@ -1,72 +1,59 @@
 # FlipClock Wallpaper
 
-FlipClock Wallpaper is an Electron + Three.js Windows desktop wallpaper that renders a real-time 3D split-flap clock in a transparent fullscreen fallback wallpaper window. It targets Windows 11 and should also work on Windows 10.
+FlipClock Wallpaper is an Electron Windows wallpaper app with a Three.js split-flap clock. V2 adds true desktop-icon wallpaper integration while keeping the V1 transparent fullscreen fallback.
 
-## Features
+## V2 WorkerW wallpaper mode
 
-- Electron tray-only shell with no taskbar button.
-- V1 fallback wallpaper mode: a fullscreen, transparent, borderless, click-through window that stays out of the taskbar and is shown inactive.
-- WorkerW desktop embedding is planned for V2 after native packaging is hardened.
-- Three.js scene with individual digit card meshes, depth, bevel-like box geometry, PBR materials, high-resolution canvas glyph textures, soft lighting, contact shadows, and perspective camera tilt.
-- Efficient render loop: the scene renders on startup, settings changes, resize, and while a digit is actively flipping rather than running a constant 60 FPS loop.
-- Settings panel for 12/24-hour mode, seconds, date visibility, theme presets, direct color pickers, scale, preset positions, custom X/Y offsets, reset position, camera tilt, and About version/mode details.
-- `electron-store` persistence and `auto-launch` login startup.
-- `electron-builder` packaging for NSIS installer and portable Windows executable.
-- GitHub Actions workflow that builds Windows `.exe` artifacts on demand or after pushes to `main`.
+On Windows, the app loads a small C++ N-API addon (`src/native/workerw.cc`) without dynamic FFI packages. The addon asks Explorer to create the desktop `WorkerW` layer, enumerates top-level windows to find `SHELLDLL_DefView`, locates the sibling `WorkerW`, then reparents the Electron wallpaper HWND behind the desktop icons. It also applies click-through, no-activate, and tool-window extended window styles so the wallpaper stays non-interactive and out of Alt-Tab.
 
-## Development
+The main process reattaches the wallpaper when displays are added, removed, or their metrics change. It also retries periodically, which lets the wallpaper recover after Explorer restarts.
+
+## Fallback mode
+
+If WorkerW attachment fails, FlipClock remains usable in the V1 fullscreen transparent wallpaper window. The Settings > Diagnostics section shows whether WorkerW is active, whether fallback is active, and the most recent attach error reason.
+
+## 3D flip-card rig
+
+The renderer uses Three.js with shared rounded/beveled card geometry, PBR-style materials, cached canvas digit textures, contact shadows, accent glow, and key/rim/fill lighting. Each digit is a split-flap rig with top, bottom, and animated flap halves. The flap rotates around a hinge-like top pivot with a spring/bounce settle curve, and rendering is requested only during flips, resize, or settings changes to keep idle CPU/GPU use low.
+
+## Settings
+
+Open the tray menu and choose **Settings**. V2 groups controls into Clock, Appearance, Layout, Animation, and Diagnostics. Changes save instantly and are pushed to the wallpaper immediately, including 12/24-hour mode, seconds, date, colors, scale, position, offsets, camera tilt, animation speed, shadow strength, and glow intensity.
+
+## Build the Windows EXE from GitHub Actions
+
+1. Push to `main` or run the **Build Windows EXE** workflow manually from the Actions tab.
+2. The workflow runs `npm install`, `npm run lint`, and `npm run build -- --publish never` on `windows-latest`.
+3. Download the `windows-exe-artifacts` artifact; it contains the generated `dist/*.exe` installer/portable builds.
+
+## Local development
 
 ```bash
 npm install
+npm run lint
 npm start
 ```
 
-V1 always runs in fallback wallpaper mode. WorkerW is intentionally disabled so `npm install`, `npm start`, and `npm run build` stay reliable without native Win32 addon compilation. On non-Windows systems this is also useful for developing the renderer and settings UI.
-
-## Build local Windows executables
+To build locally on Windows:
 
 ```bash
-npm install
-npm run build
+npm run build -- --publish never
 ```
 
-Build outputs are written to `dist/` and include both an NSIS installer and a portable executable.
+## V2 smoke test checklist
 
-## Build Windows executables with GitHub Actions
+After downloading or building the Windows EXE:
 
-1. Open the repository on GitHub.
-2. Go to **Actions** → **Build Windows EXE**.
-3. Select **Run workflow**.
-4. Wait for the workflow run to complete.
-5. Open the completed run and download the `windows-exe-artifacts` artifact.
+1. Run the EXE and open **Settings** from the tray icon.
+2. Check **Diagnostics** and confirm the native addon is loaded, WorkerW is active, and fallback is not active.
+3. Confirm the clock appears behind desktop icons rather than above them.
+4. Click desktop icons and empty desktop space through the wallpaper to confirm click-through behavior.
+5. If WorkerW is not active, confirm fallback is active and record the native addon or attach error from Diagnostics.
 
-The workflow builds on `windows-latest`, runs `npm install`, `npm run lint`, and `npm run build`, then uploads generated `.exe` files from `dist/`.
+## Troubleshooting WorkerW
 
-## Current V1 limitations
-
-V1 is the packaging-safe fallback release. These items are intentionally deferred to V2:
-
-- WorkerW behind-icons desktop embedding mode is V2. V1 keeps WorkerW disabled and does not depend on `ffi-napi`, `ref-napi`, or any native Win32 install-time addon.
-- 3D date cards are V2. V1 uses a lightweight themed date overlay positioned beneath the clock.
-- Per-monitor placement is V2. V1 uses one click-through wallpaper window sized to the union of all displays with global position and X/Y offset controls.
-
-## Wallpaper mode and WorkerW roadmap
-
-V1 intentionally does not ship native WorkerW injection. The app uses a safe fallback wallpaper mode: Electron creates a transparent, borderless BrowserWindow sized to the union of all displays, marks it click-through so normal desktop interactions continue, skips the taskbar, and shows the window inactive. This keeps `npm install`, `npm start`, and `npm run build` reliable without native Win32 addon compilation.
-
-WorkerW behind-icons embedding is planned for V2. That future implementation can restore the `Progman` `0x052C` technique and `SetParent` behavior once it is packaged as a reliable prebuilt native helper instead of requiring fragile install-time native modules.
-
-## Three.js flip-card rig notes
-
-Each visible digit owns a `DigitCard` group containing top, bottom, and transient flap meshes. The meshes are thin `BoxGeometry` cards so they have physical depth and catch light. Canvas textures are generated per digit and half: the top half draws the lower part of a large glyph, and the bottom half draws the upper part, creating the split-flap illusion across the seam. During a change, the transient top flap starts with the previous digit texture and rotates down around the X axis with an ease-in and settle curve while the new top and bottom halves are already installed behind it.
-
-Lighting uses ambient fill, a top-left key light with soft shadows, and a colored rim light. A large shadow-receiving plane sits just below the cards to create a faint contact shadow so the clock reads as a physical object floating above the desktop. Camera tilt is configurable and uses a perspective camera rather than orthographic projection so card thickness and foreshortening remain visible.
-
-## Project structure
-
-```text
-src/main/       Electron main process, tray, settings, fallback wallpaper mode
-src/renderer/   Three.js wallpaper renderer and settings panel
-src/native/     Reserved for a future V2 WorkerW helper
-.github/        Windows release build workflow
-```
+- Check **Settings > Diagnostics** for `WorkerW active`, `Fallback active`, native addon load state, addon path, addon load error, and the attach error.
+- Restart Explorer or use the tray **Restart clock** action if Explorer was recently restarted.
+- Ensure the app is running on Windows; WorkerW mode is not available on macOS/Linux.
+- If the native addon cannot load, run `npm install` again on Windows with Visual Studio Build Tools installed, then rebuild the app.
+- The fallback mode should continue showing the clock even when WorkerW attachment is unavailable.

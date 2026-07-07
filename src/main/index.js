@@ -3,7 +3,7 @@ const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage } = require
 const Store = require('electron-store');
 const AutoLaunch = require('auto-launch');
 const { defaultSettings } = require('./defaults');
-const { attachToDesktop } = require('./workerw');
+const { attachToDesktop, getWallpaperStatus } = require('./workerw');
 
 const store = new Store({ defaults: defaultSettings });
 let wallpaperWindow;
@@ -44,6 +44,7 @@ function reattachWallpaper() {
   const result = attachToDesktop(wallpaperWindow);
   if (!result.ok) wallpaperWindow.setAlwaysOnTop(false, 'desktop');
   wallpaperWindow.showInactive();
+  wallpaperWindow.webContents.send('wallpaper:status', getDiagnostics());
   wallpaperWindow.webContents.send('settings:changed', store.store);
 }
 
@@ -92,11 +93,24 @@ function createTray() {
 }
 
 ipcMain.handle('settings:get', () => store.store);
-ipcMain.handle('app:info', () => ({ version: app.getVersion(), mode: 'V1 fallback wallpaper mode' }));
+function getDiagnostics() {
+  const status = getWallpaperStatus();
+  return {
+    appVersion: app.getVersion(),
+    electronVersion: process.versions.electron,
+    mode: status.workerWActive ? 'V2 WorkerW desktop wallpaper mode' : 'V1 fullscreen transparent fallback mode',
+    ...status
+  };
+}
+
+ipcMain.handle('app:info', () => getDiagnostics());
 ipcMain.handle('settings:set', (_event, patch) => {
   store.set(patch);
   const settings = store.store;
-  BrowserWindow.getAllWindows().forEach((win) => win.webContents.send('settings:changed', settings));
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('settings:changed', settings);
+    win.webContents.send('wallpaper:status', getDiagnostics());
+  });
   configureAutoLaunch(settings.startup.autoLaunch);
   return settings;
 });
