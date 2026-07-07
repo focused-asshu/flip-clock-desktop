@@ -6,6 +6,7 @@ const defaultSettings = {
   },
   layout: { scale: 1, position: 'center', offsetX: 0, offsetY: 0, perDisplay: {} },
   camera: { tilt: 0.42 },
+  animation: { speed: 1, shadowStrength: 0.35, glowStrength: 0.35 },
   startup: { autoLaunch: true }
 };
 module.exports = { defaultSettings };

@@ -1,53 +1,8 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Settings</title>
-  <link rel="stylesheet" href="styles/settings.css">
-</head>
-<body>
-  <main>
-    <header>
-      <h1>FlipClock Wallpaper</h1>
-      <p>V1 controls for the safe fallback wallpaper window.</p>
-    </header>
-
-    <section>
-      <h2>Clock</h2>
-      <label><input id="use24Hour" type="checkbox"> 24-hour time</label>
-      <label><input id="showSeconds" type="checkbox"> Show seconds</label>
-      <label><input id="showDate" type="checkbox"> Show date</label>
-    </section>
-
-    <section>
-      <h2>Theme</h2>
-      <label>Preset <select id="preset"><option value="graphite">Graphite</option><option value="ivory">Ivory</option><option value="midnight">Midnight</option><option value="custom">Custom</option></select></label>
-      <label>Card color <input id="cardColor" type="color"></label>
-      <label>Digit color <input id="digitColor" type="color"></label>
-      <label>Background color <input id="backgroundColor" type="color"></label>
-      <label>Accent color <input id="accentColor" type="color"></label>
-    </section>
-
-    <section>
-      <h2>Layout</h2>
-      <label>Scale <input id="scale" type="range" min="0.5" max="1.7" step="0.05"></label>
-      <label>Camera tilt <input id="tilt" type="range" min="0" max="1" step="0.01"></label>
-      <label>Position <select id="position"><option>center</option><option>top-left</option><option>top-right</option><option>bottom-left</option><option>bottom-right</option></select></label>
-      <label>Offset X <input id="offsetX" type="range" min="-3" max="3" step="0.05"></label>
-      <label>Offset Y <input id="offsetY" type="range" min="-2" max="2" step="0.05"></label>
-      <button id="resetPosition" type="button">Reset position</button>
-    </section>
-
-    <section>
-      <h2>About</h2>
-      <dl>
-        <div><dt>Version</dt><dd id="version">—</dd></div>
-        <div><dt>Mode</dt><dd id="mode">V1 fallback wallpaper mode</dd></div>
-      </dl>
-    </section>
-
-    <button id="restart" type="button">Restart clock</button>
-  </main>
-  <script src="settings.js"></script>
-</body>
-</html>
+<!doctype html><html><head><meta charset="utf-8"><title>Settings</title><link rel="stylesheet" href="styles/settings.css"></head><body><main>
+<header><p class="eyebrow">V2 Wallpaper Studio</p><h1>FlipClock Wallpaper</h1><p>Polished WorkerW wallpaper mode with instant live settings.</p></header>
+<section><h2>Clock</h2><label><input id="use24Hour" type="checkbox"> 24-hour time</label><label><input id="showSeconds" type="checkbox"> Show seconds</label><label><input id="showDate" type="checkbox"> Show date</label></section>
+<section><h2>Appearance</h2><label>Preset <select id="preset"><option value="graphite">Graphite</option><option value="ivory">Ivory</option><option value="midnight">Midnight</option><option value="custom">Custom</option></select></label><div class="grid"><label>Card <input id="cardColor" type="color"></label><label>Digits <input id="digitColor" type="color"></label><label>Background <input id="backgroundColor" type="color"></label><label>Accent <input id="accentColor" type="color"></label></div></section>
+<section><h2>Layout</h2><label>Scale <input id="scale" type="range" min="0.5" max="1.7" step="0.05"><output id="scaleValue"></output></label><label>Position <select id="position"><option>center</option><option>top-left</option><option>top-right</option><option>bottom-left</option><option>bottom-right</option></select></label><label>Offset X <input id="offsetX" type="range" min="-3" max="3" step="0.05"><output id="offsetXValue"></output></label><label>Offset Y <input id="offsetY" type="range" min="-2" max="2" step="0.05"><output id="offsetYValue"></output></label><label>Camera tilt <input id="tilt" type="range" min="0" max="1" step="0.01"><output id="tiltValue"></output></label><button id="resetPosition" type="button">Reset position</button></section>
+<section><h2>Animation</h2><label>Animation speed <input id="animationSpeed" type="range" min="0.4" max="2" step="0.05"><output id="animationSpeedValue"></output></label><label>Shadow strength <input id="shadowStrength" type="range" min="0" max="1" step="0.05"><output id="shadowStrengthValue"></output></label><label>Glow strength <input id="glowStrength" type="range" min="0" max="1" step="0.05"><output id="glowStrengthValue"></output></label></section>
+<section><h2>Diagnostics</h2><dl><div><dt>App version</dt><dd id="version">—</dd></div><div><dt>Electron</dt><dd id="electron">—</dd></div><div><dt>Mode</dt><dd id="mode">—</dd></div><div><dt>WorkerW active</dt><dd id="workerWActive">—</dd></div><div><dt>Fallback active</dt><dd id="fallbackActive">—</dd></div><div><dt>Attach error</dt><dd id="attachError">—</dd></div></dl></section>
+<button id="restart" type="button">Restart clock</button></main><script src="settings.js"></script></body></html>

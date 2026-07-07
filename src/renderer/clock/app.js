@@ -21,7 +21,7 @@ scene.add(key);
 const rim = new THREE.DirectionalLight(0x8fb7ff, 0.65);
 rim.position.set(5, 2, -5);
 scene.add(rim);
-const plane = new THREE.Mesh(new THREE.PlaneGeometry(16, 5), new THREE.ShadowMaterial({ opacity: 0.22 }));
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(16, 5), new THREE.ShadowMaterial({ opacity: 0.35 }));
 plane.rotation.x = -Math.PI / 2;
 plane.position.y = -1.15;
 plane.receiveShadow = true;
@@ -33,20 +33,39 @@ let colons = [];
 let last = '';
 let animating = false;
 let renderTimer = null;
+const cardGeometry = createRoundedCardGeometry();
+const textureCache = new Map();
+
+function createRoundedCardGeometry() {
+  const w = 1; const h = 0.62; const r = 0.07;
+  const shape = new THREE.Shape();
+  shape.moveTo(-w / 2 + r, -h / 2);
+  shape.lineTo(w / 2 - r, -h / 2); shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -h / 2 + r);
+  shape.lineTo(w / 2, h / 2 - r); shape.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+  shape.lineTo(-w / 2 + r, h / 2); shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, h / 2 - r);
+  shape.lineTo(-w / 2, -h / 2 + r); shape.quadraticCurveTo(-w / 2, -h / 2, -w / 2 + r, -h / 2);
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.025, bevelSegments: 5 });
+  geo.center();
+  return geo;
+}
 
 function textureFor(char, half, theme) {
+  const cacheKey = `${char}:${half}:${theme.cardColor}:${theme.digitColor}:${theme.accentColor}`;
+  if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
   const canvasTexture = document.createElement('canvas');
   canvasTexture.width = 512;
   canvasTexture.height = 320;
   const g = canvasTexture.getContext('2d');
   g.fillStyle = theme.cardColor;
   g.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+  g.shadowColor = theme.accentColor; g.shadowBlur = 16;
   const gradient = g.createLinearGradient(0, 0, 0, canvasTexture.height);
   gradient.addColorStop(0, 'rgba(255,255,255,.10)');
   gradient.addColorStop(0.5, 'rgba(0,0,0,.14)');
   gradient.addColorStop(1, 'rgba(0,0,0,.24)');
   g.fillStyle = gradient;
   g.fillRect(0, 0, canvasTexture.width, canvasTexture.height);
+  g.fillStyle = 'rgba(255,255,255,.10)'; g.fillRect(0, 0, canvasTexture.width, 3);
   g.fillStyle = theme.digitColor;
   g.font = '700 330px Segoe UI,Arial';
   g.textAlign = 'center';
@@ -56,6 +75,7 @@ function textureFor(char, half, theme) {
   g.fillRect(0, half === 'top' ? canvasTexture.height - 7 : 0, canvasTexture.width, 7);
   const texture = new THREE.CanvasTexture(canvasTexture);
   texture.colorSpace = THREE.SRGBColorSpace;
+  textureCache.set(cacheKey, texture);
   return texture;
 }
 
@@ -73,7 +93,7 @@ class DigitCard {
   }
 
   half(halfName) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 0.62, 0.12, 3, 1, 1), this.body.clone());
+    const mesh = new THREE.Mesh(cardGeometry, this.body.clone());
     mesh.position.y = halfName === 'top' ? 0.33 : -0.33;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -83,8 +103,9 @@ class DigitCard {
   setFace(mesh, char, half) {
     mesh.material = new THREE.MeshStandardMaterial({
       map: textureFor(char, half, settings.theme),
-      roughness: 0.72,
-      metalness: 0.03
+      roughness: 0.58,
+      metalness: 0.08,
+      envMapIntensity: 0.7
     });
   }
 
@@ -110,10 +131,10 @@ class DigitCard {
 
   update(now) {
     if (!this.started) return false;
-    const progress = Math.min((now - this.started) / 780, 1);
+    const progress = Math.min((now - this.started) / (780 / (settings.animation?.speed || 1)), 1);
     const ease = progress < 0.82
-      ? Math.pow(progress / 0.82, 2) * 0.95
-      : 1 - Math.sin(((1 - progress) / 0.18) * Math.PI) * 0.05;
+      ? 1 - Math.pow(1 - (progress / 0.82), 3) * 0.98
+      : 1 + Math.sin(((progress - 0.82) / 0.18) * Math.PI * 2) * 0.035 * (1 - progress);
     this.flap.rotation.x = -Math.PI * ease;
     if (progress >= 1) {
       this.value = this.next;
@@ -130,7 +151,7 @@ function colon() {
   [-0.22, 0.22].forEach((y) => {
     const mesh = new THREE.Mesh(
       new THREE.SphereGeometry(0.07, 24, 12),
-      new THREE.MeshStandardMaterial({ color: settings.theme.accentColor, emissive: settings.theme.accentColor, emissiveIntensity: 0.25 })
+      new THREE.MeshStandardMaterial({ color: settings.theme.accentColor, emissive: settings.theme.accentColor, emissiveIntensity: settings.animation?.glowStrength ?? 0.35, roughness: 0.35 })
     );
     mesh.position.y = y;
     mesh.castShadow = true;
@@ -205,7 +226,15 @@ function timeString() {
 function applySettings(reset = false) {
   scene.background = new THREE.Color(settings.theme.backgroundColor);
   rim.color.set(settings.theme.accentColor);
+  rim.intensity = 0.45 + (settings.animation?.glowStrength ?? 0.35);
+  key.intensity = 1.8 + ((settings.animation?.shadowStrength ?? 0.35) * 1.6);
+  plane.material.opacity = settings.animation?.shadowStrength ?? 0.35;
   root.scale.setScalar(settings.layout.scale);
+  colons.flatMap((separator) => separator.children).forEach((dot) => {
+    dot.material.color.set(settings.theme.accentColor);
+    dot.material.emissive.set(settings.theme.accentColor);
+    dot.material.emissiveIntensity = settings.animation?.glowStrength ?? 0.35;
+  });
   camera.position.set(0, 1.2 + settings.camera.tilt * 1.5, 8 - settings.camera.tilt);
   camera.lookAt(0, 0, 0);
   applyPosition();
