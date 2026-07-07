@@ -20,9 +20,16 @@ function render(s) {
   COLOR_IDS.forEach((id) => { $(id).value = s.theme[id]; });
   $('scale').value = s.layout.scale;
   $('tilt').value = s.camera.tilt;
+  $('animationSpeed').value = s.animation?.speed ?? 1;
+  $('shadowStrength').value = s.animation?.shadowStrength ?? 0.35;
+  $('glowStrength').value = s.animation?.glowStrength ?? 0.35;
   $('position').value = s.layout.position;
   $('offsetX').value = s.layout.offsetX || 0;
   $('offsetY').value = s.layout.offsetY || 0;
+  ['scale', 'tilt', 'offsetX', 'offsetY', 'animationSpeed', 'shadowStrength', 'glowStrength'].forEach((id) => {
+    const out = $(`${id}Value`);
+    if (out) out.textContent = $(id).value;
+  });
 }
 
 async function save(patch) {
@@ -31,10 +38,16 @@ async function save(patch) {
 }
 
 window.flipClock.getSettings().then(render);
-window.flipClock.getAppInfo?.().then((info) => {
-  $('version').textContent = info.version;
-  $('mode').textContent = info.mode;
-});
+function renderDiagnostics(info) {
+  $('version').textContent = info.appVersion || info.version || '—';
+  $('electron').textContent = info.electronVersion || '—';
+  $('mode').textContent = info.mode || '—';
+  $('workerWActive').textContent = info.workerWActive ? 'Yes' : 'No';
+  $('fallbackActive').textContent = info.fallbackActive ? 'Yes' : 'No';
+  $('attachError').textContent = info.attachError || 'None';
+}
+window.flipClock.getAppInfo?.().then(renderDiagnostics);
+window.flipClock.onWallpaperStatus?.(renderDiagnostics);
 window.flipClock.onSettings(render);
 
 ['use24Hour', 'showSeconds', 'showDate'].forEach((id) => $(id).addEventListener('change', () => save({ clock: { ...settings.clock, [id]: $(id).checked } })));
@@ -51,3 +64,7 @@ $('offsetX').addEventListener('input', () => save({ layout: { ...settings.layout
 $('offsetY').addEventListener('input', () => save({ layout: { ...settings.layout, offsetY: Number($('offsetY').value) } }));
 $('resetPosition').addEventListener('click', () => save({ layout: { ...settings.layout, position: 'center', offsetX: 0, offsetY: 0 } }));
 $('restart').addEventListener('click', () => window.flipClock.restartClock());
+
+$('animationSpeed').addEventListener('input', () => save({ animation: { ...settings.animation, speed: Number($('animationSpeed').value) } }));
+$('shadowStrength').addEventListener('input', () => save({ animation: { ...settings.animation, shadowStrength: Number($('shadowStrength').value) } }));
+$('glowStrength').addEventListener('input', () => save({ animation: { ...settings.animation, glowStrength: Number($('glowStrength').value) } }));

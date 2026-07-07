@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld('flipClock', {
   onSettings: (callback) => ipcRenderer.on('settings:changed', (_event, settings) => callback(settings)),
   restartClock: () => ipcRenderer.invoke('clock:restart'),
   getAppInfo: () => ipcRenderer.invoke('app:info'),
+  onWallpaperStatus: (callback) => ipcRenderer.on('wallpaper:status', (_event, status) => callback(status)),
   platform: process.platform
 });
