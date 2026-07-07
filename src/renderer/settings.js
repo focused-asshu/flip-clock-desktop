@@ -44,6 +44,9 @@ function renderDiagnostics(info) {
   $('mode').textContent = info.mode || '—';
   $('workerWActive').textContent = info.workerWActive ? 'Yes' : 'No';
   $('fallbackActive').textContent = info.fallbackActive ? 'Yes' : 'No';
+  $('nativeAddonLoaded').textContent = info.nativeAddonLoaded ? 'Loaded' : 'Not loaded';
+  $('nativeAddonPath').textContent = info.nativeAddonPath || '—';
+  $('nativeAddonError').textContent = info.nativeAddonError || 'None';
   $('attachError').textContent = info.attachError || 'None';
 }
 window.flipClock.getAppInfo?.().then(renderDiagnostics);
