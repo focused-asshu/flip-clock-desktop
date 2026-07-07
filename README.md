@@ -12,7 +12,7 @@ FlipClock Wallpaper is an Electron + Three.js Windows desktop wallpaper that ren
 - Settings panel for 12/24-hour mode, seconds, date visibility, theme presets, direct color pickers, scale, preset positions, custom X/Y offsets, reset position, camera tilt, and About version/mode details.
 - `electron-store` persistence and `auto-launch` login startup.
 - `electron-builder` packaging for NSIS installer and portable Windows executable.
-- GitHub Actions workflow that builds release `.exe` assets for tagged releases.
+- GitHub Actions workflow that builds Windows `.exe` artifacts on demand or after pushes to `main`.
 
 ## Development
 
@@ -32,6 +32,15 @@ npm run build
 
 Build outputs are written to `dist/` and include both an NSIS installer and a portable executable.
 
+## Build Windows executables with GitHub Actions
+
+1. Open the repository on GitHub.
+2. Go to **Actions** → **Build Windows EXE**.
+3. Select **Run workflow**.
+4. Wait for the workflow run to complete.
+5. Open the completed run and download the `windows-exe-artifacts` artifact.
+
+The workflow builds on `windows-latest`, runs `npm install`, `npm run lint`, and `npm run build`, then uploads generated `.exe` files from `dist/`.
 
 ## Current V1 limitations
 
